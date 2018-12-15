@@ -1,9 +1,9 @@
 /*
- * Author: Emre Şahin
- * Project: Thief Alarm System
- * Date: 14.12.2018
- * Version: v1.0
- */
+   Author: Emre Şahin
+   Project: Thief Alarm System
+   Date: 15.12.2018
+   Version: v1.0
+*/
 #include <IRremote.h>
 const int RECV_PIN = 4;
 IRrecv irrecv(RECV_PIN);
@@ -26,7 +26,7 @@ DHT dht(DHTPIN, DHTTYPE);
 uint8_t time[8];
 char recv[BUFF_MAX];
 unsigned int recv_size = 0;
-unsigned long prev, interval = 5000;
+unsigned long prev, interval = 0;
 void parse_cmd(char *cmd, int cmdsize);
 struct ts t;
 ////////////////////////////////////////
@@ -116,6 +116,10 @@ void dht11_sensor() {
 }
 
 void ir_remote_reciever() {
+  if (alarm_menu == true) {
+    set_alarm();
+  }
+
   if (irrecv.decode(&results)) {
     if (results.value == 2672 && alarm_menu == true) {
       alarm2 = alarm2 * -1;
@@ -242,9 +246,9 @@ void lcd_menu() {
 
 
 void set_alarm() {
-  lcd.clear();
+  lcd.print("               ");
   lcd.setCursor(0, 0);
-  //1
+  //first alarm
   if (alarm_hour < 10) {
     lcd.print("0");
     lcd.print(alarm_hour);
@@ -258,8 +262,8 @@ void set_alarm() {
   } else {
     lcd.print(alarm_minute);
   }
-
-  lcd.setCursor(0, 1);
+  lcd.print("  ||  ");
+  //second alarm
   if (alarm_hour2 < 10) {
     lcd.print("0");
     lcd.print(alarm_hour2);
@@ -273,35 +277,40 @@ void set_alarm() {
   } else {
     lcd.print(alarm_minute2);
   }
+
+  lcd.setCursor(0, 1);
+  lcd.print("Saat: ");
+  show_time();
+  delay(150);
 }
 
 void loop_alarm() {
   delay(25);
   /*for debugging purpose
-  Serial.println("******************************");
-  Serial.println(t.hour + t.min / 100);
-  Serial.println(alarm_hour + alarm_minute / 100);
-  Serial.println(alarm_hour2 + alarm_minute2 / 100);*/
+    Serial.println("******************************");
+    Serial.println(t.hour + t.min / 100);
+    Serial.println(alarm_hour + alarm_minute / 100);
+    Serial.println(alarm_hour2 + alarm_minute2 / 100);*/
   if (alarm_hour + alarm_minute / 100 < alarm_hour2 + alarm_minute2 / 100) {
     if (t.hour + t.min / 100 >= alarm_hour + alarm_minute / 100 && t.hour + t.min / 100 <= alarm_hour2 + alarm_minute2 / 100) {
       pir_sensor();
       /*for debugging purpose
-      Serial.println("******************************");
-      Serial.println("Working, Straight alarm set");
-      Serial.println(t.hour + t.min / 100);
-      Serial.println(alarm_hour + alarm_minute / 100);
-      Serial.println("******************************");
+        Serial.println("******************************");
+        Serial.println("Working, Straight alarm set");
+        Serial.println(t.hour + t.min / 100);
+        Serial.println(alarm_hour + alarm_minute / 100);
+        Serial.println("******************************");
       */
     }
   } else if (alarm_hour2 + alarm_minute2 / 100 < alarm_hour + alarm_minute / 100) {
     if (t.hour >= alarm_hour + alarm_minute / 100 || t.hour <= alarm_hour2 + alarm_minute2 / 100) {
       pir_sensor();
       /*for debugging purpose
-      Serial.println("******************************");
-      Serial.println("Working, Reverse alarm set");
-      Serial.println(t.hour + t.min / 100);
-      Serial.println(alarm_hour + alarm_minute / 100);
-      Serial.println("******************************");
+        Serial.println("******************************");
+        Serial.println("Working, Reverse alarm set");
+        Serial.println(t.hour + t.min / 100);
+        Serial.println(alarm_hour + alarm_minute / 100);
+        Serial.println("******************************");
       */
     }
   }
@@ -309,15 +318,14 @@ void loop_alarm() {
 }
 
 void show_time() {
-  lcd.setCursor(0, 1);
   lcd.print(t.hour);
-  lcd.print(":");
+  lcd.print(".");
   if (t.min < 10)
   {
     lcd.print("0");
   }
   lcd.print(t.min);
-  lcd.print(":");
+  lcd.print(".");
   if (t.sec < 10)
   {
     lcd.print("0");
