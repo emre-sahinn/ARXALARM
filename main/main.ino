@@ -1,9 +1,11 @@
+////////////////////////////////////////
 /*
    Author: Emre Şahin
    Project: Thief Alarm System
    Date: 15.12.2018
    Version: v1.0
 */
+////////////////////////////////////////
 #include <IRremote.h>
 const int RECV_PIN = 4;
 IRrecv irrecv(RECV_PIN);
@@ -49,7 +51,6 @@ void setup() {
   memset(recv, 0, BUFF_MAX);
   //Serial.println("GET time");
   //parse_cmd("T002523312122018", 16);//TSSmmHHwDDmmYYYY for setting clock
-
   irrecv.enableIRIn();
   dht.begin();
   pinMode(pir, INPUT);
@@ -72,9 +73,9 @@ void melody(String melody_type) {
     for (int i = 0; i < 80; i++) {
       Serial.println(i);
       digitalWrite(buzzer, i);
-      delay(i + 10);
+      delay(i + 15);
       digitalWrite(buzzer, LOW);
-      delay(i + 10);
+      delay(i + 15);
     }
   } else if (melody_type == "opening") {
     digitalWrite(buzzer, 150);
@@ -94,11 +95,13 @@ void melody(String melody_type) {
 void pir_sensor() {
   pir_state = digitalRead(pir);
   if (pir_state == HIGH) {
-    lcd.setCursor(0, 1);
-    lcd.print("                 *");
+    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("HAREKET VAR !");
     melody("alarm");
+    loop_alarm();
+    ir_remote_reciever();
+    clock_module();
   } else {
     digitalWrite(buzzer, LOW);
   }
