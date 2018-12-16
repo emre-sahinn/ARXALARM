@@ -43,6 +43,15 @@ int alarm_hour2 = 12;
 int alarm_minute2 = 0;
 bool info_menu;
 bool menu = true;
+bool clock_set_menu;
+int clock_hour;
+int clock_min;
+int clock_second;
+int clock_choice;
+String current_clock;
+String str_clock_hour;
+String str_clock_min;
+String str_clock_second;
 ////////////////////////////////////////
 
 void setup() {
@@ -121,14 +130,11 @@ void dht11_sensor() {
 void ir_remote_reciever() {
   if (alarm_menu == true) {
     set_alarm();
+  } else if (clock_set_menu == true) {
+    clock_menu();
   }
 
   if (irrecv.decode(&results)) {
-    if (results.value == 2672 && alarm_menu == true) {
-      alarm2 = alarm2 * -1;
-      melody("click");
-    }
-
     if (results.value == 2704) {
       ir_escape();
     } else if (results.value == 2704) {//exit button
@@ -137,21 +143,37 @@ void ir_remote_reciever() {
       menu = false;
       alarm_menu = true;
       info_menu = false;
+      clock_set_menu = false;
       melody("click");
       set_alarm();
     } else if (results.value == 2064 && menu == true) {//button2
       menu = false;
       alarm_menu = false;
       info_menu = true;
+      clock_set_menu = false;
       melody("click");
       dht11_sensor();
+    } else if (results.value == 1040 && menu == true) {//button3
+      menu = false;
+      alarm_menu = false;
+      info_menu = false;
+      clock_set_menu = true;
+      melody("click");
+      clock_menu();
+    } else if (results.value == 3088 && menu == true) {//button4
+      //kumanda tanımlama yeri
     } else if (results.value == 112) {//menu
       menu = true;
       alarm_menu = false;
       info_menu = false;
+      clock_set_menu = false;
       melody("click");
       lcd_menu();
     } else if (alarm_menu == true) {
+      if (results.value == 2672) {
+        alarm2 = alarm2 * -1;
+        melody("click");
+      }
       if (alarm2 == 1) {
         if (results.value == 752) {//upbutton
           melody("click");
@@ -221,6 +243,53 @@ void ir_remote_reciever() {
           set_alarm();
         }
       }
+    } else if (clock_set_menu == true) {
+      if (results.value == 2672) {//enterbutton
+        current_clock = String("T" + str_clock_second + str_clock_min + str_clock_hour + "0" + "00" + "00" + "2019");
+        parse_cmd(current_clock.c_str(), 16);//TSSmmHHwDDmmYYYY for setting clock
+      }
+
+      if (results.value == 2800) {//downbutton
+        melody("click");
+        if (clock_choice == 0) {
+          if (clock_hour > 0) {
+            clock_hour -= 1;
+          }
+        } else if (clock_choice == 1) {
+          if (clock_min > 0) {
+            clock_min -= 1;
+          }
+        } else if (clock_choice == 2) {
+          if (clock_second > 0) {
+            clock_second -= 10;
+          }
+        }
+      } else if (results.value == 752) {//upbutton
+        melody("click");
+        if (clock_choice == 0) {
+          if (clock_hour < 23) {
+            clock_hour += 1;
+          }
+        } else if (clock_choice == 1) {
+          if (clock_min < 59) {
+            clock_min += 1;
+          }
+        } else if (clock_choice == 2) {
+          if (clock_second < 50) {
+            clock_second += 10;
+          }
+        }
+      } else if (results.value == 3280) {//rightbutton
+        melody("click");
+        if (clock_choice < 2) {
+          clock_choice += 1;
+        }
+      } else if (results.value == 720) {//leftbutton
+        melody("click");
+        if (clock_choice > 0) {
+          clock_choice -= 1;
+        }
+      }
     }
     Serial.println(results.value);
     irrecv.resume();
@@ -242,11 +311,64 @@ void first_lcd_text(String text, String text2, String text3) {
 
 void lcd_menu() {
   lcd.clear();
-  lcd.print("1:Alarm Kur");
+  lcd.print("1:Alarm   3:Saat");
   lcd.setCursor(0, 1);
-  lcd.print("2:Hava Durumu");
+  lcd.print("2:Hava 4:Kumanda");
 }
 
+
+void clock_menu() {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Saat: ");
+  if (t.hour < 10) {
+    lcd.print("0");
+  }
+  lcd.print(t.hour);
+  lcd.print(".");
+  if (t.min < 10)
+  {
+    lcd.print("0");
+  }
+  lcd.print(t.min);
+  lcd.print(".");
+  if (t.sec < 10)
+  {
+    lcd.print("0");
+  }
+  lcd.print(t.sec);
+  lcd.setCursor(0, 1);
+  lcd.print("Kur:  ");
+  if (clock_hour < 10)
+  {
+    lcd.print("0");
+    str_clock_hour = "0" + String(clock_hour);
+  } else {
+    str_clock_hour = String(clock_hour);
+  }
+  lcd.print(clock_hour);
+  lcd.print(".");
+  if (clock_min < 10)
+  {
+    lcd.print("0");
+    str_clock_min = "0" + String(clock_min);
+  } else {
+    str_clock_min = String(clock_min);
+  }
+  lcd.print(clock_min);
+  lcd.print(".");
+  if (clock_second < 10)
+  {
+    lcd.print("0");
+    str_clock_second = "0" + String(clock_second);
+  } else {
+    str_clock_second = String(clock_second);
+  }
+  lcd.print(clock_second);
+
+  delay(150);
+  results.value = 0;
+}
 
 void set_alarm() {
   lcd.print("               ");
@@ -321,6 +443,9 @@ void loop_alarm() {
 }
 
 void show_time() {
+  if (t.hour < 10) {
+    lcd.print("0");
+  }
   lcd.print(t.hour);
   lcd.print(".");
   if (t.min < 10)
