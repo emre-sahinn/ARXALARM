@@ -2,7 +2,7 @@
 /*
    Author: Emre Şahin
    Project: Thief Alarm System
-   Date: 15.12.2018
+   Date: 17.12.2018
    Version: v1.0
 */
 ////////////////////////////////////////
@@ -11,7 +11,7 @@ const int RECV_PIN = 4;
 IRrecv irrecv(RECV_PIN);
 decode_results results;
 int lcd_start;
-bool is_first_start = true;
+bool is_first_start = false;
 ////////////////////////////////////////
 #include <LiquidCrystal_I2C.h>
 int lcd_pin = 2;
@@ -28,9 +28,33 @@ DHT dht(DHTPIN, DHTTYPE);
 uint8_t time[8];
 char recv[BUFF_MAX];
 unsigned int recv_size = 0;
-unsigned long prev, interval = 0;
+unsigned long prev, interval = 1000;
 void parse_cmd(char *cmd, int cmdsize);
 struct ts t;
+////////////////////////////////////////
+#include <Keypad.h>
+char keypad_button;
+const byte keypadx = 4;
+const byte keypady = 4;
+
+char keypad_num[keypadx][keypady] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+
+};
+
+byte row_pins[keypadx] = {5, 6, 7, 8};
+byte column_pins[keypady] = {9, 10, 11, 12,};
+
+Keypad keypad = Keypad(makeKeymap(keypad_num), row_pins, column_pins, keypadx, keypady);
+
+String password = "ABCD";
+bool first_password_set;
+int pass_digit;
+String temp_pass = "";
+bool quit_alarm;
 ////////////////////////////////////////
 const int pir = 2;
 int pir_state = 0;
@@ -52,6 +76,11 @@ String current_clock;
 String str_clock_hour;
 String str_clock_min;
 String str_clock_second;
+int password_menu = 1;
+int current_second;
+bool thief_delay;
+bool detected;
+bool pir_state_high;
 ////////////////////////////////////////
 
 void setup() {
@@ -66,15 +95,84 @@ void setup() {
   pinMode(buzzer, OUTPUT);
   lcd.begin();
   lcd.clear();
-  //lcd.backlight();
-  lcd.noBacklight();
+  lcd.backlight();
+  //lcd.noBacklight();
   Serial.begin(9600);
 }
 
+void first_pass_set_menu() {
+  if (first_password_set == false) {
+    lcd.setCursor(0, 0);
+    lcd.print("Sifre Olustur    ");
+    lcd.setCursor(0, 1);
+    if (pass_digit < 4) {
+      keypad_button = keypad.getKey();
+      if (keypad_button) {
+        lcd.setCursor(pass_digit, 1);
+        lcd.print("*");
+        pass_digit += 1;
+        melody("click");
+        temp_pass += keypad_button;
+      }
+    }
+    if (pass_digit == 4) {
+      password = temp_pass;
+      first_password_set = true;
+
+      pass_digit = 0;
+      temp_pass = "";
+      lcd.setCursor(0, 0);
+      delay(250);
+      lcd.clear();
+      lcd.print("Sifre Kaydedildi");
+      delay(2000);
+      lcd.clear();
+      is_first_start = true;
+      ir_escape();
+    }
+  }
+}
+
+void quit_alarm_func() {
+  if (first_password_set == true) {
+    if (pass_digit < 4) {
+      keypad_button = keypad.getKey();
+      if (keypad_button) {
+        pass_digit += 1;
+        melody("click");
+        temp_pass += keypad_button;
+      }
+    }
+    if (pass_digit == 4) {
+      if (temp_pass == password) {
+        delay(250);
+        lcd.clear();
+        lcd.print("Alarm Kapaniyor");
+        delay(1500);
+        lcd.noBacklight();
+        quit_alarm = true;
+        lcd_start = 0;
+        lcd.clear();
+        lcd_menu();
+      } else {
+        lcd.clear();
+        lcd.print("Sifre Yanlis");
+        delay(1000);
+        lcd.clear();
+      }
+      pass_digit = 0;
+      temp_pass = "";
+    }
+  }
+}
+
 void loop() {
+  first_pass_set_menu();
+  quit_alarm_func();
   loop_alarm();
   ir_remote_reciever();
   clock_module();
+  Serial.println(quit_alarm);
 }
 
 void melody(String melody_type) {
@@ -104,18 +202,56 @@ void melody(String melody_type) {
 void pir_sensor() {
   pir_state = digitalRead(pir);
   if (pir_state == HIGH) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("HAREKET VAR !");
-    melody("alarm");
-    loop_alarm();
-    ir_remote_reciever();
-    clock_module();
+    if (pir_state_high == false) {
+      detected = true;
+      pir_state_high = true;
+    }
   } else {
     digitalWrite(buzzer, LOW);
   }
-}
 
+  if (detected == true) {
+    Serial.print(t.sec);
+    Serial.print(" ---> ");
+    Serial.print(current_second);
+    Serial.println(" hareket var");
+    if (thief_delay == false) {
+      lcd.setCursor(0, 0);
+      lcd.print("Hareket Goruldu ");
+      lcd.setCursor(0, 1);
+      lcd.print("Sifreyi Girin.. ");
+      current_second = int(t.sec) + 15;
+      if (current_second > 59) {
+        current_second = current_second - 60;
+      }
+      thief_delay = true;
+    }
+    if (t.sec == current_second && quit_alarm == false) {
+      lcd.setCursor(0, 0);
+      lcd.print("Izinsiz Giris ! ");
+      lcd.setCursor(0, 1);
+      lcd.print("XXXXXXXXXXXXXXXX");
+      melody("alarm");
+      pir_state_high = false;
+      detected = false;
+      thief_delay = false;
+      current_second = -1;
+      loop_alarm();
+      ir_remote_reciever();
+      clock_module();
+    }
+    if (quit_alarm == true) {
+      pir_state = LOW;
+      current_second = -1;
+      pir_state_high = false;
+      detected = false;
+      thief_delay = false;
+      loop_alarm();
+      ir_remote_reciever();
+      clock_module();
+    }
+  }
+}
 void dht11_sensor() {
   lcd.setCursor(0, 0);
   lcd.print("Oda ");
@@ -124,7 +260,6 @@ void dht11_sensor() {
   lcd.setCursor(0, 1);
   lcd.print("Nemlilik %");
   lcd.print(int(dht.readHumidity()));
-  lcd.print("         ");
 }
 
 void ir_remote_reciever() {
@@ -135,10 +270,9 @@ void ir_remote_reciever() {
   }
 
   if (irrecv.decode(&results)) {
-    if (results.value == 2704) {
+    if (results.value == 2704) {//exit button
+      melody("opening");
       ir_escape();
-    } else if (results.value == 2704) {//exit button
-      melody("click");
     } else if (results.value == 16 && menu == true) {//button1
       menu = false;
       alarm_menu = true;
@@ -439,7 +573,6 @@ void loop_alarm() {
       */
     }
   }
-
 }
 
 void show_time() {
@@ -466,12 +599,14 @@ void ir_escape() {
   if (lcd_start == 0) {
     lcd.backlight();
     lcd_start = 1;
+    quit_alarm = false;
     if (is_first_start) {
       melody("opening");
       is_first_start = false;
       first_lcd_text("ARX COMPANY 2019", "Sistem Kuruluyor", "Hos Geldiniz");
     }
   } else {
+
     lcd.noBacklight();
     lcd_start = 0;
   }
