@@ -2,19 +2,19 @@
 /*
    Author: Emre Şahin
    Project: Thief Alarm System
-   Date: 17.12.2018
+   Date: 18.12.2018
    Version: v1.0
 */
 ////////////////////////////////////////
 #include <IRremote.h>
-const int RECV_PIN = 4;
+const byte RECV_PIN = 4;
 IRrecv irrecv(RECV_PIN);
 decode_results results;
 int lcd_start;
 bool is_first_start = false;
 ////////////////////////////////////////
 #include <LiquidCrystal_I2C.h>
-int lcd_pin = 2;
+const byte lcd_pin = 2;
 LiquidCrystal_I2C lcd(0x27, 16, lcd_pin);
 ////////////////////////////////////////
 #include "DHT.h"
@@ -52,32 +52,32 @@ Keypad keypad = Keypad(makeKeymap(keypad_num), row_pins, column_pins, keypadx, k
 
 String password = "ABCD";
 bool first_password_set;
-int pass_digit;
+byte pass_digit;
 String temp_pass = "";
 bool quit_alarm;
 ////////////////////////////////////////
 const int pir = 2;
 int pir_state = 0;
-const int buzzer = A0;
-int alarm_hour = 12;
-int alarm_minute = 0;
+const byte buzzer = A0;
+byte alarm_hour = 12;
+byte alarm_minute = 0;
 bool alarm_menu;
 int alarm2 = -1;
-int alarm_hour2 = 12;
-int alarm_minute2 = 0;
+byte alarm_hour2 = 12;
+byte alarm_minute2 = 0;
 bool info_menu;
 bool menu = true;
 bool clock_set_menu;
-int clock_hour;
-int clock_min;
-int clock_second;
-int clock_choice;
+byte clock_hour;
+byte clock_min;
+byte clock_second;
+byte clock_choice;
 String current_clock;
 String str_clock_hour;
 String str_clock_min;
 String str_clock_second;
 int password_menu = 1;
-int current_second;
+byte current_second;
 bool thief_delay;
 bool detected;
 bool pir_state_high;
@@ -172,7 +172,6 @@ void loop() {
   loop_alarm();
   ir_remote_reciever();
   clock_module();
-  Serial.println(quit_alarm);
 }
 
 void melody(String melody_type) {
@@ -425,6 +424,7 @@ void ir_remote_reciever() {
         }
       }
     }
+    Serial.print("Kumanda: ");
     Serial.println(results.value);
     irrecv.resume();
   }
@@ -447,7 +447,7 @@ void lcd_menu() {
   lcd.clear();
   lcd.print("1:Alarm   3:Saat");
   lcd.setCursor(0, 1);
-  lcd.print("2:Hava 4:Kumanda");
+  lcd.print("2:Hava          ");//4:Kumanda
 }
 
 
@@ -610,25 +610,6 @@ void ir_escape() {
     lcd.noBacklight();
     lcd_start = 0;
   }
-}
-
-void ir_setting_one() {
-  delay(250);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Emre Sahin");
-  lcd.setCursor(0, 1);
-  lcd.print("Arda Pecel");
-}
-
-
-void ir_setting_two() {
-  delay(250);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Emre Sahin");
-  lcd.setCursor(0, 1);
-  lcd.print("Arda Pecel");
 }
 
 void clock_module()
