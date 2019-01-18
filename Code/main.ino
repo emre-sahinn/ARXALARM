@@ -159,6 +159,7 @@ void quit_alarm_func() {
         lcd.print("Sifre Yanlis");
         delay(1000);
         lcd.clear();
+        lcd_menu();
       }
       pass_digit = 0;
       temp_pass = "";
@@ -245,12 +246,31 @@ void pir_sensor() {
       pir_state_high = false;
       detected = false;
       thief_delay = false;
+      lcd_menu();
       loop_alarm();
       ir_remote_reciever();
       clock_module();
     }
   }
 }
+
+void first_lcd_text(String text = "", int row = 0, String text2 = "") {
+  lcd.clear();
+  if (row == 0) {
+    lcd.setCursor(0, 0);
+    lcd.print(text);
+  } else {
+    melody("click");
+    lcd.setCursor(0, 0);
+    lcd.print(text);
+    lcd.setCursor(0, 1);
+    lcd.print(text2);
+  }
+  delay(1500);
+  lcd.clear();
+  lcd_menu();
+}
+
 void dht11_sensor() {
   lcd.setCursor(0, 0);
   lcd.print("Oda ");
@@ -259,6 +279,7 @@ void dht11_sensor() {
   lcd.setCursor(0, 1);
   lcd.print("Nemlilik %");
   lcd.print(int(dht.readHumidity()));
+  lcd.print("          ");
 }
 
 void ir_remote_reciever() {
@@ -294,7 +315,7 @@ void ir_remote_reciever() {
       melody("click");
       clock_menu();
     } else if (results.value == 3088 && menu == true) {//button4
-      //kumanda tanımlama yeri
+      first_lcd_text("Emre Sahin", 1, "Arda Pecel");
     } else if (results.value == 112) {//menu
       menu = true;
       alarm_menu = false;
@@ -378,6 +399,7 @@ void ir_remote_reciever() {
       }
     } else if (clock_set_menu == true) {
       if (results.value == 2672) {//enterbutton
+        melody("opening");
         current_clock = String("T" + str_clock_second + str_clock_min + str_clock_hour + "0" + "00" + "00" + "2019");
         parse_cmd(current_clock.c_str(), 16);//TSSmmHHwDDmmYYYY for setting clock
       }
@@ -430,24 +452,13 @@ void ir_remote_reciever() {
   }
 }
 
-void first_lcd_text(String text, String text2, String text3) {
-  lcd.setCursor(0, 0);
-  lcd.print(text);
-  delay(1500);
-  lcd.clear();
-  lcd.print(text2);
-  delay(2000);
-  lcd.clear();
-  lcd.print(text3);
-  delay(1500);
-  lcd_menu();
-}
+
 
 void lcd_menu() {
   lcd.clear();
   lcd.print("1:Alarm   3:Saat");
   lcd.setCursor(0, 1);
-  lcd.print("2:Hava          ");//4:Kumanda
+  lcd.print("2:Hava   4:Bilgi");
 }
 
 
@@ -499,8 +510,7 @@ void clock_menu() {
     str_clock_second = String(clock_second);
   }
   lcd.print(clock_second);
-
-  delay(150);
+  delay(200);
   results.value = 0;
 }
 
@@ -603,10 +613,9 @@ void ir_escape() {
     if (is_first_start) {
       melody("opening");
       is_first_start = false;
-      first_lcd_text("ARX COMPANY 2019", "Sistem Kuruluyor", "Hos Geldiniz");
+      first_lcd_text("ARX COMPANY 2019");
     }
   } else {
-
     lcd.noBacklight();
     lcd_start = 0;
   }
