@@ -2,9 +2,25 @@
 /*
    Author: Emre Şahin
    Project: Thief Alarm System
-   Date: 18.12.2018
-   Version: v1.0
+   Date: 18.01.2019
+   Version: v1.1
 */
+////////////////////////////////////////
+//Change this part for your remote controller.
+//You can read your controller's signal code,
+//Accourding to your codes, you have to change following codes.
+const int exit_button = 2704;
+const int _1_button = 16;
+const int _2_button = 2064;
+const int _3_button = 1040;
+const int _4_button = 3088;
+const int left_button = 720;
+const int right_button = 3280;
+const int ok_button = 2672;
+const int up_button = 752;
+const int down_button = 2800;
+const int menu_button = 112;
+
 ////////////////////////////////////////
 #include <IRremote.h>
 const byte RECV_PIN = 4;
@@ -290,33 +306,33 @@ void ir_remote_reciever() {
   }
 
   if (irrecv.decode(&results)) {
-    if (results.value == 2704) {//exit button
+    if (results.value == exit_button) {//exit button
       melody("opening");
       ir_escape();
-    } else if (results.value == 16 && menu == true) {//button1
+    } else if (results.value == _1_button && menu == true) {//button1
       menu = false;
       alarm_menu = true;
       info_menu = false;
       clock_set_menu = false;
       melody("click");
       set_alarm();
-    } else if (results.value == 2064 && menu == true) {//button2
+    } else if (results.value == _2_button && menu == true) {//button2
       menu = false;
       alarm_menu = false;
       info_menu = true;
       clock_set_menu = false;
       melody("click");
       dht11_sensor();
-    } else if (results.value == 1040 && menu == true) {//button3
+    } else if (results.value == _3_button && menu == true) {//button3
       menu = false;
       alarm_menu = false;
       info_menu = false;
       clock_set_menu = true;
       melody("click");
       clock_menu();
-    } else if (results.value == 3088 && menu == true) {//button4
+    } else if (results.value == _4_button && menu == true) {//button4
       first_lcd_text("Emre Sahin", 1, "Arda Pecel");
-    } else if (results.value == 112) {//menu
+    } else if (results.value == menu_button) {//menu
       menu = true;
       alarm_menu = false;
       info_menu = false;
@@ -324,12 +340,12 @@ void ir_remote_reciever() {
       melody("click");
       lcd_menu();
     } else if (alarm_menu == true) {
-      if (results.value == 2672) {
+      if (results.value == ok_button) {//okbutton
         alarm2 = alarm2 * -1;
         melody("click");
       }
       if (alarm2 == 1) {
-        if (results.value == 752) {//upbutton
+        if (results.value == up_button) {//upbutton
           melody("click");
           if (alarm_hour >= 23) {
             alarm_hour = 23;
@@ -337,7 +353,7 @@ void ir_remote_reciever() {
             alarm_hour += 1;
           }
           set_alarm();
-        } else if (results.value == 2800) {//downbutton
+        } else if (results.value == down_button) {//downbutton
           melody("click");
           if (alarm_hour < 1) {
             alarm_hour = 0;
@@ -345,7 +361,7 @@ void ir_remote_reciever() {
             alarm_hour -= 1;
           }
           set_alarm();
-        } else if (results.value == 3280) {//rightbutton
+        } else if (results.value == right_button) {//rightbutton
           melody("click");
           if (alarm_minute >= 50) {
             alarm_minute = 50;
@@ -353,7 +369,7 @@ void ir_remote_reciever() {
             alarm_minute += 10;
           }
           set_alarm();
-        } else if (results.value == 720) {//leftbutton
+        } else if (results.value == left_button) {//leftbutton
           melody("click");
           if (alarm_minute < 10) {
             alarm_minute = 0;
@@ -363,7 +379,7 @@ void ir_remote_reciever() {
           set_alarm();
         }
       } else {
-        if (results.value == 752) {//upbutton
+        if (results.value == up_button) {//upbutton
           melody("click");
           if (alarm_hour2 >= 23) {
             alarm_hour2 = 23;
@@ -371,7 +387,7 @@ void ir_remote_reciever() {
             alarm_hour2 += 1;
           }
           set_alarm();
-        } else if (results.value == 2800) {//downbutton
+        } else if (results.value == down_button) {//downbutton
           melody("click");
           if (alarm_hour2 < 1) {
             alarm_hour2 = 0;
@@ -379,7 +395,7 @@ void ir_remote_reciever() {
             alarm_hour2 -= 1;
           }
           set_alarm();
-        } else if (results.value == 3280) {//rightbutton
+        } else if (results.value == right_button) {//rightbutton
           melody("click");
           if (alarm_minute2 >= 50) {
             alarm_minute2 = 50;
@@ -387,7 +403,7 @@ void ir_remote_reciever() {
             alarm_minute2 += 10;
           }
           set_alarm();
-        } else if (results.value == 720) {//leftbutton
+        } else if (results.value == left_button) {//leftbutton
           melody("click");
           if (alarm_minute2 < 10) {
             alarm_minute2 = 0;
@@ -398,13 +414,13 @@ void ir_remote_reciever() {
         }
       }
     } else if (clock_set_menu == true) {
-      if (results.value == 2672) {//enterbutton
+      if (results.value == ok_button) {//enterbutton
         melody("opening");
         current_clock = String("T" + str_clock_second + str_clock_min + str_clock_hour + "0" + "00" + "00" + "2019");
         parse_cmd(current_clock.c_str(), 16);//TSSmmHHwDDmmYYYY for setting clock
       }
 
-      if (results.value == 2800) {//downbutton
+      if (results.value == down_button) {//downbutton
         melody("click");
         if (clock_choice == 0) {
           if (clock_hour > 0) {
@@ -419,7 +435,7 @@ void ir_remote_reciever() {
             clock_second -= 10;
           }
         }
-      } else if (results.value == 752) {//upbutton
+      } else if (results.value == up_button) {//upbutton
         melody("click");
         if (clock_choice == 0) {
           if (clock_hour < 23) {
@@ -434,12 +450,12 @@ void ir_remote_reciever() {
             clock_second += 10;
           }
         }
-      } else if (results.value == 3280) {//rightbutton
+      } else if (results.value == right_button) {//rightbutton
         melody("click");
         if (clock_choice < 2) {
           clock_choice += 1;
         }
-      } else if (results.value == 720) {//leftbutton
+      } else if (results.value == left_button) {//leftbutton
         melody("click");
         if (clock_choice > 0) {
           clock_choice -= 1;
