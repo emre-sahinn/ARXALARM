@@ -1,0 +1,52 @@
+///// *SYSTEM SETTINGS* /////
+//Do not forget to change parameters for your system.
+///Language Settings///
+const String language = "tr";//or tr
+const String lang[26] = {
+  "Sifre Olustur   ",//0
+  "Sifre Kaydedildi",//1
+  "Alarm Kapaniyor ",//2
+  "Sifre Yanlis    ",//3
+  "Hareket Goruldu ",//4
+  "Sifreyi Girin.. ",//5
+  "Izinsiz Giris ! ",//6
+  "Oda ",            //7
+  "Nemlilik %",      //8
+  "1:Alarm   3:Saat",//9
+  "2:Hava   4:Bilgi",//10
+  "Saat: ",          //11
+  "Kur:  ",          //12
+  //english
+  "Create Password ",//13
+  "Password Saved  ",//14
+  "Alarm Turns Off ",//15
+  "Wrong Password  ",//16
+  "Motion Detected ",//17
+  "Enter Password..",//18
+  "Unauthorized!   ",//19
+  "Room ",           //20
+  "Humidity %",      //21
+  "1:Alarm  3:Clock",//22
+  "2:Temp   4:Info ",//23
+  "Clock: ",         //24
+  "Set:  "          //25
+};
+int lang_sett = 0;//Do not change this value
+
+///Remote Controller Settings///
+/*Change this part for your remote controller.
+  You can read your controller's signal code,
+  According to your codes, you have to change following codes.*/
+const int exit_button = 2704;
+const int _1_button = 16;
+const int _2_button = 2064;
+const int _3_button = 1040;
+const int _4_button = 3088;
+const int left_button = 720;
+const int right_button = 3280;
+const int ok_button = 2672;
+const int up_button = 752;
+const int down_button = 2800;
+const int menu_button = 112;
+
+///// *END OF SYSTEM SETTINGS* /////
