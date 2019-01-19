@@ -7,8 +7,8 @@
 */
 ////////////////////////////////////////
 //Change this part for your remote controller.
-//You can read your controller's signal code,
-//Accourding to your codes, you have to change following codes.
+//You can read your controller's signal code from serial port,
+//According to your codes, you have to change following codes.
 const int exit_button = 2704;
 const int _1_button = 16;
 const int _2_button = 2064;
