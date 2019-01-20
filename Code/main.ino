@@ -2,8 +2,8 @@
 /*
    Author: Emre Şahin
    Project: Thief Alarm System
-   Date: 18.01.2019
-   Version: v1.1
+   Date: 20.01.2019
+   Version: v1.2
 */
 ////////////////////////////////////////
 //Change this part for your remote controller.
@@ -72,6 +72,7 @@ byte pass_digit;
 String temp_pass = "";
 bool quit_alarm;
 ////////////////////////////////////////
+const int alarm_delay_second = 15;
 const int pir = 2;
 int pir_state = 0;
 const byte buzzer = A0;
@@ -161,6 +162,8 @@ void quit_alarm_func() {
     }
     if (pass_digit == 4) {
       if (temp_pass == password) {
+        pass_digit = 0;
+        temp_pass = "";
         delay(250);
         lcd.clear();
         lcd.print("Alarm Kapaniyor");
@@ -171,14 +174,15 @@ void quit_alarm_func() {
         lcd.clear();
         lcd_menu();
       } else {
+        pass_digit = 0;
+        temp_pass = "";
         lcd.clear();
         lcd.print("Sifre Yanlis");
         delay(1000);
         lcd.clear();
         lcd_menu();
       }
-      pass_digit = 0;
-      temp_pass = "";
+
     }
   }
 }
@@ -189,6 +193,25 @@ void loop() {
   loop_alarm();
   ir_remote_reciever();
   clock_module();
+}
+
+void show_time() {
+  if (t.hour < 10) {
+    lcd.print("0");
+  }
+  lcd.print(t.hour);
+  lcd.print(".");
+  if (t.min < 10)
+  {
+    lcd.print("0");
+  }
+  lcd.print(t.min);
+  lcd.print(".");
+  if (t.sec < 10)
+  {
+    lcd.print("0");
+  }
+  lcd.print(t.sec);
 }
 
 void melody(String melody_type) {
@@ -216,7 +239,15 @@ void melody(String melody_type) {
 }
 
 void pir_sensor() {
-  pir_state = digitalRead(pir);
+  if (quit_alarm == false) {
+    pir_state = digitalRead(pir);
+  } else {
+    pir_state = false;
+    pir_state_high = false;
+    detected = false;
+    thief_delay = false;
+  }
+
   if (pir_state == HIGH) {
     if (pir_state_high == false) {
       detected = true;
@@ -226,27 +257,28 @@ void pir_sensor() {
     digitalWrite(buzzer, LOW);
   }
 
-  if (detected == true) {
+  if (detected == true && quit_alarm == false) {
+    lcd.setCursor(0, 0);
+    lcd.print("Hareket Goruldu ");
+    lcd.setCursor(0, 1);
+    lcd.print("Sifreyi Girin.. ");
     Serial.print(t.sec);
     Serial.print(" ---> ");
     Serial.print(current_second);
     Serial.println(" hareket var");
     if (thief_delay == false) {
-      lcd.setCursor(0, 0);
-      lcd.print("Hareket Goruldu ");
-      lcd.setCursor(0, 1);
-      lcd.print("Sifreyi Girin.. ");
-      current_second = int(t.sec) + 15;
+      current_second = int(t.sec) + alarm_delay_second;
       if (current_second > 59) {
         current_second = current_second - 60;
       }
       thief_delay = true;
     }
-    if (t.sec == current_second && quit_alarm == false) {
+    if (t.sec == current_second) {
       lcd.setCursor(0, 0);
       lcd.print("Izinsiz Giris ! ");
       lcd.setCursor(0, 1);
-      lcd.print("XXXXXXXXXXXXXXXX");
+      lcd.print("Saat-->");
+      show_time();
       melody("alarm");
       pir_state_high = false;
       detected = false;
@@ -297,6 +329,8 @@ void dht11_sensor() {
   lcd.print(int(dht.readHumidity()));
   lcd.print("          ");
 }
+
+
 
 void ir_remote_reciever() {
   if (alarm_menu == true) {
@@ -575,7 +609,8 @@ void loop_alarm() {
     Serial.println("******************************");
     Serial.println(t.hour + t.min / 100);
     Serial.println(alarm_hour + alarm_minute / 100);
-    Serial.println(alarm_hour2 + alarm_minute2 / 100);*/
+    Serial.println(alarm_hour2 + alarm_minute2 / 100);
+  */
   if (alarm_hour + alarm_minute / 100 < alarm_hour2 + alarm_minute2 / 100) {
     if (t.hour + t.min / 100 >= alarm_hour + alarm_minute / 100 && t.hour + t.min / 100 <= alarm_hour2 + alarm_minute2 / 100) {
       pir_sensor();
@@ -601,24 +636,6 @@ void loop_alarm() {
   }
 }
 
-void show_time() {
-  if (t.hour < 10) {
-    lcd.print("0");
-  }
-  lcd.print(t.hour);
-  lcd.print(".");
-  if (t.min < 10)
-  {
-    lcd.print("0");
-  }
-  lcd.print(t.min);
-  lcd.print(".");
-  if (t.sec < 10)
-  {
-    lcd.print("0");
-  }
-  lcd.print(t.sec);
-}
 
 void ir_escape() {
   delay(125);
