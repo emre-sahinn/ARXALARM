@@ -257,7 +257,7 @@ void pir_sensor() {
     digitalWrite(buzzer, LOW);
   }
 
-  if (detected == true && quit_alarm == false) {
+  if (detected == true && quit_alarm == false && alarm_menu == false && clock_set_menu == false) {
     lcd.setCursor(0, 0);
     lcd.print("Hareket Goruldu ");
     lcd.setCursor(0, 1);
@@ -333,12 +333,6 @@ void dht11_sensor() {
 
 
 void ir_remote_reciever() {
-  if (alarm_menu == true) {
-    set_alarm();
-  } else if (clock_set_menu == true) {
-    clock_menu();
-  }
-
   if (irrecv.decode(&results)) {
     if (results.value == exit_button) {//exit button
       melody("opening");
@@ -500,6 +494,11 @@ void ir_remote_reciever() {
     Serial.println(results.value);
     irrecv.resume();
   }
+  if (alarm_menu == true) {
+    set_alarm();
+  } else if (clock_set_menu == true) {
+    clock_menu();
+  }
 }
 
 
@@ -513,7 +512,6 @@ void lcd_menu() {
 
 
 void clock_menu() {
-  lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Saat: ");
   if (t.hour < 10) {
@@ -532,6 +530,7 @@ void clock_menu() {
     lcd.print("0");
   }
   lcd.print(t.sec);
+  lcd.print("  ");
   lcd.setCursor(0, 1);
   lcd.print("Kur:  ");
   if (clock_hour < 10)
@@ -560,12 +559,12 @@ void clock_menu() {
     str_clock_second = String(clock_second);
   }
   lcd.print(clock_second);
-  delay(200);
-  results.value = 0;
+  lcd.print("  ");
+  delay(100);
 }
 
 void set_alarm() {
-  lcd.print("               ");
+  lcd.print("                ");
   lcd.setCursor(0, 0);
   //first alarm
   if (alarm_hour < 10) {
@@ -600,38 +599,37 @@ void set_alarm() {
   lcd.setCursor(0, 1);
   lcd.print("Saat: ");
   show_time();
-  delay(150);
+  delay(100);
 }
 
 void loop_alarm() {
   delay(25);
   /*for debugging purpose
-    Serial.println("******************************");
-    Serial.println(t.hour + t.min / 100);
-    Serial.println(alarm_hour + alarm_minute / 100);
-    Serial.println(alarm_hour2 + alarm_minute2 / 100);
-  */
-  if (alarm_hour + alarm_minute / 100 < alarm_hour2 + alarm_minute2 / 100) {
-    if (t.hour + t.min / 100 >= alarm_hour + alarm_minute / 100 && t.hour + t.min / 100 <= alarm_hour2 + alarm_minute2 / 100) {
+    Serial.println("--------------------------------");
+    Serial.println(t.hour + float(t.min) / 60);
+    Serial.println(alarm_hour + float(alarm_minute) / 60);
+    Serial.println(alarm_hour2 + float(alarm_minute2) / 60);*/
+
+  if (alarm_hour + float(alarm_minute) / 60 < alarm_hour2 + float(alarm_minute2) / 60) {
+    if (t.hour + float(t.min) / 60 >= alarm_hour + float(alarm_minute) / 60 && t.hour + float(t.min) / 60 <= alarm_hour2 + float(alarm_minute2) / 60) {
       pir_sensor();
       /*for debugging purpose
         Serial.println("******************************");
         Serial.println("Working, Straight alarm set");
-        Serial.println(t.hour + t.min / 100);
-        Serial.println(alarm_hour + alarm_minute / 100);
-        Serial.println("******************************");
-      */
+        Serial.println(t.hour + float(t.min) / 60);
+        Serial.println(alarm_hour + float(alarm_minute) / 100);
+        Serial.println("******************************");*/
+
     }
-  } else if (alarm_hour2 + alarm_minute2 / 100 < alarm_hour + alarm_minute / 100) {
-    if (t.hour >= alarm_hour + alarm_minute / 100 || t.hour <= alarm_hour2 + alarm_minute2 / 100) {
+  } else if (alarm_hour2 + float(alarm_minute2) / 60 < alarm_hour + float(alarm_minute) / 60) {
+    if (t.hour + float(t.min) / 60 >= alarm_hour + float(alarm_minute) / 60 || t.hour + float(t.min) / 60 <= alarm_hour2 + float(alarm_minute2) / 60) {
       pir_sensor();
       /*for debugging purpose
         Serial.println("******************************");
         Serial.println("Working, Reverse alarm set");
-        Serial.println(t.hour + t.min / 100);
-        Serial.println(alarm_hour + alarm_minute / 100);
-        Serial.println("******************************");
-      */
+        Serial.println(t.hour + float(t.min) / 60);
+        Serial.println(alarm_hour + float(alarm_minute) / 60);
+        Serial.println("******************************");*/
     }
   }
 }
